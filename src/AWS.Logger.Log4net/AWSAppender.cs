@@ -5,6 +5,9 @@ using log4net.Core;
 
 using Amazon.Runtime;
 using AWS.Logger.Core;
+using System.Collections.Generic;
+using System.Diagnostics;
+using Newtonsoft.Json;
 
 namespace AWS.Logger.Log4net
 {
@@ -15,6 +18,21 @@ namespace AWS.Logger.Log4net
     {
         AWSLoggerConfig _config = new AWSLoggerConfig();
         AWSLoggerCore _core = null;
+
+        /// <summary>
+        /// TODO!
+        /// </summary>
+        public string ProcessSessionId { get; set; } = Guid.NewGuid().ToString();
+
+        /// <summary>
+        /// TODO!
+        /// </summary>
+        public int ProcessId { get; set; } = Process.GetCurrentProcess().Id;
+
+        /// <summary>
+        /// TODO!
+        /// </summary>
+        public string MachineName { get; set; } = Environment.MachineName;
 
         /// <summary>
         /// Default Constructor
@@ -189,7 +207,31 @@ namespace AWS.Logger.Log4net
             if (_core == null)
                 return;
 
-            _core.AddMessage(RenderLoggingEvent(loggingEvent));
+            Dictionary<string, object> sctructuredLog = new Dictionary<string, object>
+            {
+                ["processSessionId"] = this.ProcessSessionId,
+                ["level"] = loggingEvent.Level.DisplayName,
+                ["messageObject"] = loggingEvent.MessageObject,
+                ["renderedMessage"] = loggingEvent.RenderedMessage,
+                ["timestampUtc"] = loggingEvent.TimeStamp.ToUniversalTime().ToString("O"),
+                ["logger"] = loggingEvent.LoggerName,
+                ["thread"] = loggingEvent.ThreadName,
+                ["exceptionObject"] = loggingEvent.ExceptionObject,
+                ["exceptionObjectString"] = loggingEvent.ExceptionObject == null ? null : loggingEvent.GetExceptionString(),
+                ["userName"] = loggingEvent.UserName,
+                ["domain"] = loggingEvent.Domain,
+                ["identity"] = loggingEvent.Identity,
+                ["location"] = loggingEvent.LocationInformation.FullInfo,
+                ["pid"] = this.ProcessId,
+                ["machineName"] = this.MachineName,
+                ["workingSet"] = Environment.WorkingSet,
+                ["osVersion"] = Environment.OSVersion.ToString(),
+                ["is64bitOS"] = Environment.Is64BitOperatingSystem,
+                ["is64bitProcess"] = Environment.Is64BitProcess,
+                ["properties"] = loggingEvent.GetProperties()
+            };
+
+            _core.AddMessage(JsonConvert.SerializeObject(sctructuredLog));
         }
     }
 }
