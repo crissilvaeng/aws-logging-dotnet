@@ -63,12 +63,6 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\src\NLog.AWS.Logger\NLog.AWS.Logger.csproj">
-      <Project>{284abc3b-da69-4038-a025-0212a6df65a3}</Project>
-      <Name>NLog.AWS.Logger</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

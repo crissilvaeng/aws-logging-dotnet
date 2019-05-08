@@ -20,54 +20,8 @@ When using Lambda it is recommended to use either the `ILambdaContext.Logger.Log
 
 ## Supported Logging Frameworks
 
-1. [NLog](#nlog)
-2. [Apache log4net](#apache-log4net)
-3. [ASP.NET Core Logging](#aspnet-core-logging)
+1. [Apache log4net](#apache-log4net)
 
-### NLog
-
-* NuGet Package: [AWS.Logger.Nlog](https://www.nuget.org/packages/AWS.Logger.NLog/)
-
-NLog uses targets that can be configured to receive log messages. Targets can be configured either 
-through a config file or through code. The default config file that NLog will automatically search for
-is **NLog.config**. Here is an example config file that configures the AWS Region and the CloudWatch Logs log group.
-
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<nlog xmlns="http://www.nlog-project.org/schemas/NLog.xsd"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      throwExceptions="true">
-  <targets>
-    <target name="aws" type="AWSTarget" logGroup="NLog.ConfigExample" region="us-east-1"/>
-  </targets>
-  <rules>
-    <logger name="*" minlevel="Info" writeTo="aws" />
-  </rules>
-</nlog>
-```
-
-The AWS credentials will be found using the standard AWS SDK for .NET credentials search path. In this case
-it will look for a profile named default, search for environment variables or search for an instance profile on an 
-EC2 instance. To use a specific AWS credential profile use the **profile** attribute on the target.
-
-Here is an example of performing the same configuration via code.
-
-```csharp
-var config = new LoggingConfiguration();
-
-var awsTarget = new AWSTarget()
-{
-    LogGroup = "NLog.ProgrammaticConfigurationExample",
-    Region = "us-east-1"
-};
-config.AddTarget("aws", awsTarget);
-
-config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, awsTarget));
-
-LogManager.Configuration = config;
-```
-
-Checkout the [NLog samples](/samples/NLog) for examples on how you can use AWS and NLog together. 
 
 ### Apache log4net
 
@@ -137,55 +91,3 @@ static void ConfigureLog4net()
 ```
 
 Checkout the [Log4net samples](/samples/Log4net) for examples of how you can use AWS and log4net together. 
-
-### ASP.NET Core Logging
-
-* NuGet Package: [AWS.Logger.AspNetCore](https://www.nuget.org/packages/AWS.Logger.AspNetCore/)
-
-ASP.NET Core introduced a new [logging framework](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging) that has providers configured to send logs to destinations. 
-The AWS.Logger.AspNetCore NuGet package provides a log provider which adds CloudWatch Logs as a destination for the logs.
-
-The [WebSample](/samples/AspNetCore/WebSample) in this repository demonstrates how to configure
-this provider.
-
-The configuration is setup in the [appsettings.json](/samples/AspNetCore/WebSample/appsettings.json) file
-
-```json
-"AWS.Logging": {
-  "Region": "us-east-1",
-  "LogGroup": "AspNetCore.WebSample",
-  "LogLevel": {
-    "Default": "Debug",
-    "System": "Information",
-    "Microsoft": "Information"
-  }
-}
-```
-
-In Startup.cs the configuration is built using the config files and assigned to the Configuration property.
-
-```csharp
-public Startup(IHostingEnvironment env)
-{
-    // Read the appsetting.json file for the configuration details
-    var builder = new ConfigurationBuilder()
-        .SetBasePath(env.ContentRootPath)
-        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-        .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-        .AddEnvironmentVariables();
-    Configuration = builder.Build();
-}
-```
-
-The `Configure` method is used to configure the services added to the dependency injection system. This is where 
-log providers are configured. For the `AWS.Logger.AspNetCore` the configuration for the provider is loaded from 
-the Configuration property and the AWS provider is added to the `ILoggerFactory`.
-
-```csharp
-public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
-{
-    // Create a logging provider based on the configuration information passed through the appsettings.json
-    loggerFactory.AddAWSProvider(this.Configuration.GetAWSLoggingConfigSection());
-
-    ...
-```
